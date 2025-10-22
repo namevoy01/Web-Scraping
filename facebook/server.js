@@ -48,7 +48,9 @@ app.get('/', (req, res) => {
       'GET /search': 'Search Facebook groups by query parameter',
       'GET /search?q=<query>': 'Example: /search?q=ร้านอาหาร',
       'GET /search-multiple': 'Search with multiple queries',
-      'GET /search-multiple?queries=<q1>,<q2>': 'Example: /search-multiple?queries=ร้านอาหาร,เครื่องดื่ม'
+      'GET /search-multiple?queries=<q1>,<q2>': 'Example: /search-multiple?queries=ร้านอาหาร,เครื่องดื่ม',
+      'GET /findgroup': 'Find groups with group and query parameters',
+      'GET /findgroup?group=<group>&query=<query>': 'Example: /findgroup?group=เบียร์&query=คราฟเบียร์'
     },
     usage: {
       method: 'GET',
@@ -57,6 +59,15 @@ app.get('/', (req, res) => {
         q: 'Search query (required)'
       },
       example: 'http://localhost:3001/search?q=<query>'
+    },
+    findgroup: {
+      method: 'GET',
+      url: '/findgroup',
+      parameters: {
+        group: 'Group search term (required)',
+        query: 'Query parameter to add to groups.json (required)'
+      },
+      example: 'http://localhost:3001/findgroup?group=เบียร์&query=คราฟเบียร์'
     }
   });
 });
@@ -190,6 +201,64 @@ app.get('/search-multiple', async (req, res) => {
 
   } catch (error) {
     console.error('❌ API Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// เพิ่ม endpoint สำหรับ findgroup
+app.get('/findgroup', async (req, res) => {
+  try {
+    const { group, query } = req.query;
+    
+    // ตรวจสอบ parameter
+    if (!group || !query) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required parameters "group" and "query"',
+        example: '/findgroup?group=เบียร์&query=คราฟเบียร์'
+      });
+    }
+
+    console.log(`🔍 FindGroup Request: group="${group}", query="${query}"`);
+    
+    // ค้นหากลุ่มในโปรแกรม
+    const t0 = Date.now();
+    const groups = await searchFacebookGroups(group, 50);
+
+    // สร้าง payload ใหม่ที่รวม query parameter
+    const payload = {
+      success: true,
+      group: group,
+      query: query,
+      total_groups: groups.length,
+      groups: groups
+    };
+
+    // เขียนทับไฟล์ด้วย payload ใหม่
+    try {
+      const outputPath = getOutputPath();
+      const outDir = path.dirname(outputPath);
+      try { fs.mkdirSync(outDir, { recursive: true }); } catch (_) {}
+      fs.writeFileSync(outputPath, JSON.stringify(payload, null, 2), 'utf8');
+      console.log(`💾 เขียนไฟล์ผลลัพธ์ (overwrite) สำเร็จ -> ${outputPath}`);
+      const ms = Date.now() - t0;
+      console.log(`📊 Summary | group="${group}" | query="${query}" | total=${payload.total_groups} | wrote=${outputPath} | ${ms}ms`);
+      if (Array.isArray(groups) && groups.length) {
+        console.log('📋 ตัวอย่าง 10 รายการแรก:');
+        console.table(groups.slice(0, 10));
+      }
+    } catch (e) {
+      console.error('❌ เขียนไฟล์ groups.json ล้มเหลว:', e.message);
+    }
+    
+    res.json(payload);
+
+  } catch (error) {
+    console.error('❌ FindGroup API Error:', error.message);
     res.status(500).json({
       success: false,
       error: 'Internal server error',

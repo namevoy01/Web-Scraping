@@ -1,6 +1,7 @@
 {
   "success": true,
-  "query": "เบียร์",
+  "group": "เบียร์",
+  "query": "สิง",
   "total_groups": 16,
   "groups": [
     {
@@ -24,12 +25,12 @@
       "url": "https://www.facebook.com/groups/1244441712750913/"
     },
     {
-      "name": "ซื้อ-ขาย อุปกรณ์ และวัตถุดิบคราฟเบียร์",
-      "url": "https://www.facebook.com/groups/135155229590527/"
-    },
-    {
       "name": "อาจารย์เบียร์ - ฅนตื่นธรรม",
       "url": "https://www.facebook.com/groups/1729991314512453/"
+    },
+    {
+      "name": "ซื้อ-ขาย อุปกรณ์ และวัตถุดิบคราฟเบียร์",
+      "url": "https://www.facebook.com/groups/135155229590527/"
     },
     {
       "name": "เรารักคราฟเบียร์ ไทยหรือนอกก็ok",
